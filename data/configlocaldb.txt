@@ -1,0 +1,8 @@
+{
+    "Host": "localhost",
+    "Port": "5432",
+    "User": "{{ .ProjName }}",
+    "Pass": "{{ .ProjName }}",
+    "Name": "{{ .ProjName }}",
+    "SSLMode": "disable"
+}

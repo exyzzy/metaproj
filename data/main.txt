@@ -1,0 +1,31 @@
+package main
+
+import (
+	"flag"
+	"log"
+	"os"
+	"strings"
+)
+
+func main() {
+	txtPtr := flag.String("txt", "api.txt", "go template as .txt file")
+	pipePtr := flag.Bool("pipe", false, "use piped generation")
+	flag.Parse()
+	if *pipePtr { //set up for more code
+		txtFile := strings.ToLower(*txtPtr)
+		if (txtFile == "") || (!strings.HasSuffix(txtFile, ".txt")) {
+			log.Panic("No .txt File")
+		}
+
+		sm, err := ReadSM()
+		if err != nil {
+			log.Panic(err)
+		}
+		err = Generate(*sm, txtFile)
+		if err != nil {
+			log.Panic(err)
+		}
+		os.Exit(0)
+	}
+    //more stuff...
+}
