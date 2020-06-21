@@ -1,11 +1,11 @@
-//go:generate  pipe metaapi -pipe=true -sql={{ .SqlFile }}  :: {{ .ProjName }} -pipe=true -txt=api.txt
-//go:generate  pipe metaapi -pipe=true -sql={{ .SqlFile }}  :: {{ .ProjName }} -pipe=true -txt=api_test.txt
+//go:generate  pipe metaapi -pipe=true -sql=[[ .SqlFile ]]  :: [[ .ProjName ]] -pipe=true -txt=api.txt
+//go:generate  pipe metaapi -pipe=true -sql=[[ .SqlFile ]]  :: [[ .ProjName ]] -pipe=true -txt=api_test.txt
 //Note requires:
 //      https://github.com/exyzzy/metaapi
 //      https://github.com/exyzzy/pipe
 
-package {{ .Package }}
+package [[ .Package ]]
 
 //before first go test:
-//createuser -P -d {{ .ProjName }} <pass: {{ .ProjName }}>
-//createdb {{ .ProjName }}
+//createuser -P -d [[ .ProjName ]] <pass: [[ .ProjName ]]>
+//createdb [[ .ProjName ]]

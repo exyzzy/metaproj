@@ -1,0 +1,202 @@
+package data
+
+import (
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"log"
+	"os"
+	"reflect"
+	"strings"
+    "strconv"
+)
+
+//helpers for test
+
+//assumes a configlocaldb.json file as:
+//{
+//    "Host": "localhost",
+//    "Port": "5432",
+//    "User": "dbname",
+//    "Pass": "dbname",
+//    "Name": "dbname",
+//    "SSLMode": "disable"
+//}
+
+var Db *sql.DB
+var DbConfig map[string]interface{}
+
+func LoadConfig(fname string, config *map[string]interface{}) {
+	fmt.Println("  loadConfig")
+	file, err := os.Open(fname)
+	if err != nil {
+		log.Panicln("Cannot open config file: ", fname, " - ", err.Error())
+	}
+	decoder := json.NewDecoder(file)
+	decoder.UseNumber()
+	err = decoder.Decode(config)
+	if err != nil {
+		log.Panicln("Cannot decode config from file", err.Error())
+	}
+}
+
+func InitDb(pdb **sql.DB, fname string, pconfig *map[string]interface{}, productionDb bool) (err error) {
+	psqlInfo := os.Getenv("DATABASE_URL")
+	if psqlInfo == "" {
+		LoadConfig(fname, pconfig)
+		config := *pconfig
+		if productionDb {
+			psqlInfo = fmt.Sprintf("host=%s port=%s user=%s password=%s "+
+				"dbname=%s sslmode=%s", config["Host"], config["Port"], config["User"], config["Pass"], config["Name"], config["SSLMode"])
+		} else {
+			psqlInfo = fmt.Sprintf("host=%s port=%s user=%s password=%s "+
+				"dbname=%s sslmode=%s", config["Host"], config["Port"], config["User"], config["Pass"], config["TestName"], config["SSLMode"])
+		}
+	}
+	*pdb, err = sql.Open("postgres", psqlInfo)
+	if err != nil {
+		log.Panicln("DB Fail to open", err)
+	}
+	// defer (*pdb).Close()
+	err = (*pdb).Ping() //check for silent fail
+	if err != nil {
+		log.Panicln("DB Silent Fail after open", err)
+	}
+	fmt.Println("Init: ", psqlInfo)
+	return
+}
+
+func CloseDb(db *sql.DB) (err error) {
+	err = db.Close()
+	fmt.Println("CloseDB")
+	return
+}
+
+func CreateDb(db *sql.DB, dbName string, owner string) (err error) {
+	ss := fmt.Sprintf("CREATE DATABASE %s OWNER %s", dbName, owner)
+	fmt.Println("  " + ss)
+	_, err = db.Exec(ss)
+	return
+}
+
+func SetTzDb(db *sql.DB) (err error) {
+	ss := fmt.Sprintf("SET TIME ZONE UTC")
+	fmt.Println("  " + ss)
+	_, err = db.Exec(ss)
+	return
+}
+
+func DropDb(db *sql.DB, dbName string) (err error) {
+	ss := fmt.Sprintf("DROP DATABASE %s", dbName)
+	fmt.Println("  " + ss)
+	_, err = db.Exec(ss)
+	return
+}
+
+func RowExists(db *sql.DB, query string, args ...interface{}) (exists bool, err error) {
+	query = fmt.Sprintf("SELECT EXISTS (%s)", query)
+	// fmt.Println("  " + query)
+	err = db.QueryRow(query, args...).Scan(&exists)
+	return
+}
+
+func TableExists(db *sql.DB, table string) (valid bool, err error) {
+
+	valid, err = RowExists(db, "SELECT 1 FROM pg_tables WHERE tablename = $1", table)
+	return
+}
+
+type CompareType func(interface{}, interface{}) bool
+
+func noCompare(result, expect interface{}) bool {
+	fmt.Printf("  noCompare: %v, %v -  %T, %T \n", result, expect, result, expect)
+	return (true)
+}
+
+func defaultCompare(result, expect interface{}) bool {
+	fmt.Printf("  defaultCompare: %v, %v -  %T, %T \n", result, expect, result, expect)
+	return (result == expect)
+}
+
+func jsonCompare(result, expect interface{}) bool {
+	fmt.Printf("  jsonCompare: %v, %v -  %T, %T \n", result, expect, result, expect)
+
+	//json fields can be any order after db return, so read into map[string]interface and look up
+	resultMap := make(map[string]interface{})
+	expectMap := make(map[string]interface{})
+
+	if reflect.TypeOf(result).String() == "sql.NullString" {
+		err := json.Unmarshal([]byte(result.(sql.NullString).String), &resultMap)
+		if err != nil {
+			log.Panic(err)
+		}
+		err = json.Unmarshal([]byte(expect.(sql.NullString).String), &expectMap)
+		if err != nil {
+			log.Panic(err)
+		}
+	} else {
+		err := json.Unmarshal([]byte(result.(string)), &resultMap)
+		if err != nil {
+			log.Panic(err)
+		}
+		err = json.Unmarshal([]byte(expect.(string)), &expectMap)
+		if err != nil {
+			log.Panic(err)
+		}
+	}
+
+	for k, v := range expectMap {
+		if v != resultMap[k] {
+			fmt.Printf("Key: %v, Result: %v, Expect: %v", k, resultMap[k], v)
+			return false
+		}
+	}
+	return true
+}
+
+func stringCompare(result, expect interface{}) bool {
+
+	resultJson, err := json.Marshal(result)
+	if err != nil {
+		log.Panic(err)
+	}
+	expectJson, err := json.Marshal(expect)
+	if err != nil {
+		log.Panic(err)
+	}
+	fmt.Printf("  stringCompare: %v, %v -  %T, %T \n", string(resultJson), string(expectJson), result, expect)
+	return (strings.TrimSpace(string(resultJson)) == strings.TrimSpace(string(expectJson)))
+}
+
+//psgl truncs reals at 6 digits
+func realCompare(result, expect interface{}) bool {
+
+	fmt.Printf("  realCompare: %v, %v -  %T, %T \n", result, expect, result, expect)
+
+	var resultStr string
+	var expectStr string
+	if reflect.TypeOf(result).String() == "sql.NullFloat64" {
+		resultStr = strconv.FormatFloat(result.(sql.NullFloat64).Float64, 'f', 6, 32)
+		expectStr = strconv.FormatFloat(expect.(sql.NullFloat64).Float64, 'f', 6, 32)
+	} else {
+		resultStr = strconv.FormatFloat(float64(result.(float32)), 'f', 6, 32)
+		expectStr = strconv.FormatFloat(float64(expect.(float32)), 'f', 6, 32)
+	}
+	return (resultStr == expectStr)
+}
+
+//iterate through each field of struct and apply the compare function to each field based on CompareType map
+func EqualField(result, expect interface{}, compMap map[string]CompareType) error {
+
+	u := reflect.ValueOf(expect)
+	v := reflect.ValueOf(result)
+	typeOfS := u.Type()
+
+	for i := 0; i < u.NumField(); i++ {
+
+		if !(compMap[typeOfS.Field(i).Name])(v.Field(i).Interface(), u.Field(i).Interface()) {
+			return fmt.Errorf("Field: %s, Result: %v, Expect: %v", typeOfS.Field(i).Name, v.Field(i).Interface(), u.Field(i).Interface())
+		}
+	}
+	return nil
+}

@@ -1,0 +1,103 @@
+package main
+
+import (
+	"[[ .DataPath ]]"
+	"encoding/json"
+	"fmt"
+	"github.com/gorilla/mux"
+	"log"
+	"net/http"
+	"os"
+	"text/template"
+	"time"
+)
+
+//#SPLICE# func {[< template "func" . >]}
+//#SPLICE# end
+
+var logger *log.Logger
+var AppConfig map[string]interface{}
+
+func getListenAddress() (string, error) {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = AppConfig["Port"].(string)
+	}
+	return ":" + port, nil
+}
+
+func initLogger() {
+	logger = log.New(os.Stdout, AppConfig["App"].(string)+":", log.Ldate|log.Ltime|log.Lshortfile)
+}
+
+//template helper with fmaps and data, generates html to writer
+func generateHTML(writer http.ResponseWriter, data interface{}, fmap template.FuncMap, filenames ...string) {
+	var files []string
+	filenames = append([]string{"layout.html"}, filenames...) //prepend layout and pass variadic
+	for _, file := range filenames {
+		files = append(files, fmt.Sprintf("templates/%s", file))
+	}
+	templates := template.New("layout")
+	templates = templates.Funcs(fmap) //can be nil
+	templates = template.Must(templates.ParseFiles(files...))
+	templates.ExecuteTemplate(writer, "layout", data)
+}
+
+func mainInit() {
+    //#SPLICE# maininit {[< template "maininit" . >]}
+    //#SPLICE# end
+	data.LoadConfig("configapp.json", &AppConfig)
+	initLogger()
+	err := data.InitDb(&data.Db, "data/configlocaldb.json", &data.DbConfig, true)
+	if err != nil {
+		log.Panicln("cannot InitDb ", err.Error())
+	}
+	data.SetTzDb(data.Db)
+	err = data.CreateTables(data.Db)
+	if err != nil {
+		log.Panicln(err)
+	}
+}
+
+func main() {
+	mainInit()
+	addr, err := getListenAddress()
+	if err != nil {
+		log.Panicln(err)
+	}
+	router := mux.NewRouter()
+	AddAllMainRoutes(router)
+	rt, err := AppConfig["ReadTimeout"].(json.Number).Int64()
+	if err != nil {
+		log.Panic(err)
+	}
+	wt, err := AppConfig["WriteTimeout"].(json.Number).Int64()
+	if err != nil {
+		log.Panic(err)
+	}
+	it, err := AppConfig["IdleTimeout"].(json.Number).Int64()
+	if err != nil {
+		log.Panic(err)
+	}
+	server := &http.Server{
+		Addr:           addr,
+		Handler:        router,
+		ReadTimeout:    time.Duration(rt * int64(time.Second)),
+		WriteTimeout:   time.Duration(wt * int64(time.Second)),
+		IdleTimeout:    time.Duration(it * int64(time.Second)),
+		MaxHeaderBytes: 1 << 20,
+	}
+	logger.Println(">>>>>>>", AppConfig["App"].(string), "started at", addr)
+	log.Fatal(server.ListenAndServe())
+}
+
+func respondWithMessage(w http.ResponseWriter, code int, message string) {
+	respondWithJSON(w, code, map[string]string{"message": message})
+}
+
+func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+	response, _ := json.Marshal(payload)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	w.Write(response)
+}

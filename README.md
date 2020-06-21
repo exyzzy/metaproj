@@ -1,6 +1,43 @@
-# metaproj
+# metaproj (v3.0)
 
-Automatically create a metaapi project
+Automatically create a metaapi project, requires metaapi
+
+New for v3:
+* Project setup for a fully functioning web server with Vue/Vuetify (-type=vue)
+
+The current version, v3.0 matches Medium article:
+* Automatic Applications in Go (in progress)
+
+## Previous versions:
+
+Pull the v2.0 tag metaproj commit to have code that matches the Medium article:
+* https://levelup.gitconnected.com/automatic-testing-in-go-ce581238eb57
+
+See also:
+* http://github.com/exyzzy/metaapi
+* http://github.com/exyzzy/metasplice
+* http://github.com/exyzzy/pipe
+
+## Most Common Scenario:
+
+```
+#assume project and database name: todo (can be anything)
+#assume sql file: events.sql (from examples, but can be anything)
+createuser -P -d todo <pass: todo>
+createdb todo
+go get github.com/exyzzy/metaapi
+go install $GOPATH/src/github.com/exyzzy/metaapi
+go get github.com/exyzzy/metaproj
+go install $GOPATH/src/github.com/exyzzy/metaproj
+cp $GOPATH/src/github.com/exyzzy/metaapi/examples/events.sql .
+metaproj -sql=events.sql -proj=todo -type=vue
+cd todo
+go generate
+go install
+go test
+```
+
+## Legacy:
 
 First create your PostgreSQL project database:
 ```

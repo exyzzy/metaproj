@@ -1,0 +1,18 @@
+package main
+
+import (
+	"net/http"
+)
+
+//#SPLICE# func {[< template "func" . >]}
+//#SPLICE# end
+
+// r.HandleFunc("/", HomeHandler).Methods("GET")
+func HomeHandler(writer http.ResponseWriter, request *http.Request) {
+	generateHTML(writer, nil, nil, "toolbar.public.html", "home.html", "home.vue.js")
+}
+
+// r.HandleFunc("/tables", TablesHandler).Methods("GET")
+func TablesHandler(writer http.ResponseWriter, request *http.Request) {
+	generateHTML(writer, nil, nil, "toolbar.public.html", "tables.html", "tables.vue.js")
+}

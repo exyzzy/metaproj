@@ -1,9 +1,9 @@
-//go:generate  metaapi -sql={{ .SqlFile }}  -txt=api.txt
-//go:generate  metaapi -sql={{ .SqlFile }}  -txt=api_test.txt
+//go:generate  metaapi -sql=[[ .SqlFile ]]  -txt=api.txt
+//go:generate  metaapi -sql=[[ .SqlFile ]]  -txt=api_test.txt
 //Note requires:
 //      https://github.com/exyzzy/metaapi
-package {{ .Package }}
+package [[ .Package ]]
 
 //before first go test:
-//createuser -P -d {{ .ProjName }} <pass: {{ .ProjName }}>
-//createdb {{ .ProjName }}
+//createuser -P -d [[ .ProjName ]] <pass: [[ .ProjName ]]>
+//createdb [[ .ProjName ]]

@@ -2,10 +2,14 @@
 package << .Package >>
 
 << .Import >>
+<< .ImportTime false >>
 
 << range $index, $table := .Tables >>
+
+// ======= << $table.CapSingName >> =======
+
 //Create Table
-func CreateTable<< $table.CapName >>(db *sql.DB) (err error) {
+func CreateTable<< $table.CapPlurName >>(db *sql.DB) (err error) {
 	_, err = db.Exec<< $table.DropTableStatement >>
 	if err != nil {
 		return
@@ -15,7 +19,7 @@ func CreateTable<< $table.CapName >>(db *sql.DB) (err error) {
 }
 
 //Drop Table
-func DropTable<< $table.CapName >>(db *sql.DB) (err error) {
+func DropTable<< $table.CapPlurName >>(db *sql.DB) (err error) {
 	_, err = db.Exec<< $table.DropTableStatement >>
 	return
 }
@@ -44,7 +48,7 @@ func (<< $table.SingName >> *<< $table.CapSingName >>) Retrieve<< $table.CapSing
 }
 
 //RetrieveAll
-func RetrieveAll<< $table.CapName >>(db *sql.DB) (<< $table.Name >> []<< $table.CapSingName >>, err error) {
+func RetrieveAll<< $table.CapPlurName >>(db *sql.DB) (<< $table.PlurName >> []<< $table.CapSingName >>, err error) {
 	rows, err := db.Query<< $table.RetrieveAllStatement >>
 	if err != nil {
 		return
@@ -54,7 +58,7 @@ func RetrieveAll<< $table.CapName >>(db *sql.DB) (<< $table.Name >> []<< $table.
 		if err = rows<< $table.ScanAll >>; err != nil {
 			return
 		}
-		<< $table.Name >> = append(<< $table.Name >>, result)
+		<< $table.PlurName >> = append(<< $table.PlurName >>, result)
 	}
 	rows.Close()
 	return
@@ -85,7 +89,7 @@ func (<< $table.SingName >> *<< $table.CapSingName >>) Delete<< $table.CapSingNa
 }
 
 //DeleteAll
-func DeleteAll<< $table.CapSingName >>s(db *sql.DB) (err error) {
+func DeleteAll<< $table.CapPlurName >>(db *sql.DB) (err error) {
 	stmt, err := db.Prepare<< $table.DeleteAllStatement>>
 	if err != nil {
 		return

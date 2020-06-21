@@ -1,0 +1,16 @@
+//go:generate  metaapi -sql=[[ .SqlFile ]]  -txt=data/v_api.txt
+//go:generate  metaapi -sql=[[ .SqlFile ]]  -txt=data/v_api_test.txt
+//go:generate  metaapi -sql=[[ .SqlFile ]]  -txt=data/v_data.txt
+//go:generate  metaapi -sql=[[ .SqlFile ]]  -txt=v_route.txt
+//go:generate  metaapi -sql=[[ .SqlFile ]]  -txt=v_route_test.txt
+//go:generate  metaapi -sql=[[ .SqlFile ]]  -txt=v_readme.txt
+//go:generate  metaapi -sql=[[ .SqlFile ]]  -txt=templates/v_tables.txt
+//go:generate  metaapi -sql=[[ .SqlFile ]]  -txt=templates/v_tables.vue.txt
+
+//Note requires:
+//      https://github.com/exyzzy/metaapi
+package [[ .Package ]]
+
+//before first go test:
+//createuser -P -d [[ .ProjName ]] <pass: [[ .ProjName ]]>
+//createdb [[ .ProjName ]]

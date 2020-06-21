@@ -1,0 +1,19 @@
+{{ define "content" }}
+<v-container>
+    <v-row column align="center" justify="center">
+        <v-col>
+            <h1 color="grey darken-3" class="mb-5 mt-4 display-1 text-center">
+                [[ .CapProjName ]] Site
+            </h1>
+            <p color="grey darken-3" class="mt-4 text-center">
+                Made with:
+            </p>
+            <div color="grey darken-3" class="subheading text-center">
+                <a href="https://github.com/exyzzy/metaproj">metaproj</a><br>
+                <a href="https://github.com/exyzzy/metaapi">metaapi</a><br>
+            </div>
+            <!--#SPLICE# body {[< template "body" . >]} #SPLICE# end -->
+        </v-col>
+    </v-row>
+</v-container>
+{{ end }}

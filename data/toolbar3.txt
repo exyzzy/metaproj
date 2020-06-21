@@ -1,0 +1,27 @@
+{{ define "toolbar" }}
+<v-app-bar 
+    fixed
+    app
+    dark 
+    color="grey darken-3"
+>
+    <v-app-bar-nav-icon aria-label="Home" href="/"></v-app-bar-nav-icon>
+    <v-toolbar-title>[[ .CapProjName ]] Site</v-toolbar-title>
+    <v-spacer></v-spacer>
+    <v-toolbar-items >
+        <v-menu >
+            <template v-slot:activator="{ on }">
+                <v-btn text v-on="on">My Data
+                    <v-icon dark>arrow_drop_down</v-icon>
+                </v-btn>
+            </template>
+            <v-list>
+                <v-list-item href="/tables" >
+                    <v-list-item-title >Tables</v-list-item-title>
+                </v-list-item>
+                <!--#SPLICE# dropdown {[< template "dropdown" . >]} #SPLICE# end -->
+            </v-list>
+        </v-menu>
+    </v-toolbar-items>
+</v-app-bar>
+{{ end }}
