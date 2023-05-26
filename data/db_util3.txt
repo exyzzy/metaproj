@@ -118,6 +118,21 @@ func defaultCompare(result, expect interface{}) bool {
 	return (result == expect)
 }
 
+func byteaCompare(result, expect interface{}) bool {
+	rb := result.([]byte)
+	eb := expect.([]byte)
+	fmt.Printf("  byteaCompare: %v, %v -  %T, %T \n", rb, eb, result, expect)
+	if len(rb) != len(eb) {
+		return false
+	}
+	for i := range rb {
+		if rb[i] != eb[i] {
+			return false
+		}
+	}
+	return true
+}
+
 func jsonCompare(result, expect interface{}) bool {
 	fmt.Printf("  jsonCompare: %v, %v -  %T, %T \n", result, expect, result, expect)
 

@@ -1,11 +1,14 @@
-# metaproj (v3.0)
+# metaproj (v4.0)
 
 Automatically create a metaapi project, requires metaapi
+
+New for v4:
+* Support BYTEA
 
 New for v3:
 * Project setup for a fully functioning web server with Vue/Vuetify (-type=vue)
 
-The current version, v3.0 matches Medium article:
+v3.0 matches Medium article:
 * Automatic Applications in Go (in progress)
 
 ## Previous versions:
